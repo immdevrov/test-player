@@ -1,18 +1,8 @@
 class CustomPlayer extends HTMLElement {
-  shadowRoot = null
-  video = null
-  wrapper = null
-  playButton = null
-  pauseButton = null
-  progress = null
-  fullScreenButton = null
-  currentTime = 0
-  duration = 0
 
   constructor() {
     super()
-
-    this.shadowRoot = this.attachShadow({ mode: 'closed' })
+    this.shadow = this.attachShadow({ mode: 'closed' })
     this.registerVideo()
     this.registerControls()
     this.render()
@@ -29,12 +19,12 @@ class CustomPlayer extends HTMLElement {
 
 
     this.video.setAttribute('type', 'video/mp4')
-    this.video.setAttribute('width', '250')
+    // this.video.setAttribute('width', '250')
 
     this.video.className = 'video'
 
     this.video.addEventListener('loadedmetadata', () => {
-      this.duration = this.video.duration;
+      this.duration = this.video.duration
     })
   }
 
@@ -43,6 +33,8 @@ class CustomPlayer extends HTMLElement {
     this.registerPauseButton()
     this.registerProgressElement()
     this.registerFullScreenButton()
+    this.registerDialogElement()
+    this.registerTimerButton()
   }
 
   play() {
@@ -50,7 +42,7 @@ class CustomPlayer extends HTMLElement {
       this.currentTime = this.video.currentTime
       const part = parseInt((this.currentTime / this.duration) * 100)
       this.progress.value = part
-    });
+    })
 
     this.video.play()
 
@@ -92,7 +84,7 @@ class CustomPlayer extends HTMLElement {
     this.fullScreenButton.className = 'button button__fullscreen'
 
     this.fullScreenButton.addEventListener('click', (event) => {
-      this.goFullScreen()
+      this.activateFullScreen()
     })
   }
 
@@ -116,33 +108,45 @@ class CustomPlayer extends HTMLElement {
   }
 
   addStyles() {
-    const linkElem = document.createElement('link');
-    linkElem.setAttribute('rel', 'stylesheet');
-    linkElem.setAttribute('href', 'player.css');
-    linkElem.setAttribute('type', 'text/css');
+    const linkElem = document.createElement('link')
+    linkElem.setAttribute('rel', 'stylesheet')
+    linkElem.setAttribute('href', 'player.css')
+    linkElem.setAttribute('type', 'text/css')
 
-    this.shadowRoot.appendChild(linkElem);
+    this.shadow.appendChild(linkElem)
   }
 
-  goFullScreen() {
-    if (!document.fullscreenElement) {
-      if (this.wrapper.requestFullscreen) {
-        this.wrapper.requestFullscreen().catch(e => { console.log(e) })
-      } else if (this.video.msRequestFullscreen) {
-        this.wrapper.msRequestFullscreen().catch(e => { console.log(e) })
-      } else if (this.video.mozRequestFullScreen) {
-        this.wrapper.mozRequestFullScreen().catch(e => { console.log(e) })
-      } else if (this.video.webkitRequestFullscreen) {
-        console.log('IOS!!!')
-        this.wrapper.webkitRequestFullscreen().catch(e => { console.log(e) })
-      }
+  isFullscreenElementAvailable() {
+    return !document.fullscreenElement &&
+      !document.msFullscreenElement &&
+      !document.mozFullScreenElement &&
+      !document.webkitFullscreenElement
+  }
+
+  activateFullScreen() {
+    if (this.isFullscreenElementAvailable()) {
+      this.goFullScreen()
     } else {
-      document.exitFullscreen() || document.webkitExitFullscreen();
+      this.exitFullscreen()
     }
   }
 
+  goFullScreen() {
+    if (this.wrapper.requestFullscreen) this.wrapper.requestFullscreen()
+    else if (this.video.msRequestFullscreen) this.wrapper.msRequestFullscreen()
+    else if (this.video.mozRequestFullScreen) this.wrapper.mozRequestFullScreen()
+    else if (this.video.webkitRequestFullscreen) this.wrapper.webkitRequestFullscreen()
+
+    this.fullScreenButton.innerText = 'Exit FullScreen'
+  }
+
   exitFullscreen() {
-    document.exitFullscreen() || document.webkitExitFullscreen();
+    if (document.exitFullscreen) document.exitFullscreen()
+    else if (document.msExitFullscreen) document.msExitFullscreen()
+    else if (document.mozCancelFullScreen) document.mozCancelFullScreen()
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen()
+
+    this.fullScreenButton.innerText = 'FullScreen'
   }
 
   render() {
@@ -153,9 +157,60 @@ class CustomPlayer extends HTMLElement {
     wrapper.appendChild(this.playButton)
     wrapper.appendChild(this.pauseButton)
     wrapper.appendChild(this.fullScreenButton)
+    wrapper.appendChild(this.timerButton)
+    wrapper.appendChild(this.dialog)
     this.wrapper = wrapper
     this.addStyles()
-    this.shadowRoot.append(this.wrapper)
+    this.shadow.append(this.wrapper)
+  }
+
+  setTimer() {
+    this.timer = setInterval(() => {
+      this.closeDialog()
+      this.showDialog()
+    }, 5000)
+  }
+
+  registerDialogElement() {
+    const dialog = document.createElement('div')
+
+    dialog.style.position = 'absolute'
+    dialog.style.backgroundColor = 'CornflowerBlue'
+    dialog.style.width = '250px'
+    dialog.style.height = '50px'
+    dialog.style.top = 'calc(50% - 25px)'
+    dialog.style.left = 'calc(50% - 125px)'
+    dialog.style.display = 'none'
+    dialog.innerText = 'ЗАКРОЙ МЕНЯ'
+
+    const closeButton = document.createElement('button')
+    closeButton.innerText = 'закрыть'
+    closeButton.addEventListener('click', () => {
+      this.closeDialog()
+    })
+    dialog.appendChild(closeButton)
+
+    this.dialog = dialog
+  }
+
+  registerTimerButton() {
+    this.timerButton = document.createElement('button')
+
+    this.timerButton.innerText = 'Go timer'
+
+    this.timerButton.className = 'button button__fullscreen'
+
+    this.timerButton.addEventListener('click', () => {
+      this.setTimer()
+    })
+  }
+
+  showDialog() {
+    this.dialog.style.display = 'block'
+  }
+
+  closeDialog() {
+    this.dialog.style.display = 'none'
   }
 }
 
