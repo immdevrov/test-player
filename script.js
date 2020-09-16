@@ -116,7 +116,7 @@ class CustomPlayer extends HTMLElement {
     this.shadow.appendChild(linkElem)
   }
 
-  isFullscreenElementAvailable() {
+  isNotFullscreenElement() {
     return !document.fullscreenElement &&
       !document.msFullscreenElement &&
       !document.mozFullScreenElement &&
@@ -124,7 +124,7 @@ class CustomPlayer extends HTMLElement {
   }
 
   activateFullScreen() {
-    if (this.isFullscreenElementAvailable()) {
+    if (this.isNotFullscreenElement()) {
       this.goFullScreen()
     } else {
       this.exitFullscreen()
@@ -165,10 +165,17 @@ class CustomPlayer extends HTMLElement {
   }
 
   setTimer() {
-    this.timer = setInterval(() => {
-      this.closeDialog()
-      this.showDialog()
-    }, 5000)
+    if (this.timer) {
+      clearInterval(this.timer)
+      alert('Таймер остановлен')
+    } else {
+      this.timer = setInterval(() => {
+        this.closeDialog()
+        this.exitFullscreen()
+        this.showDialog()
+      }, 5000)
+      alert('Таймер запущен')
+    }
   }
 
   registerDialogElement() {
